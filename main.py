@@ -132,27 +132,42 @@ def generate_final_labels(path_QrCodes, destination_address):
     print(onlyfiles)
     label_template = Image.open(filename)
     counter = 0
-    lp = len(dim) + 1 # To make sure the the internal counter covers all the dimensions ROIs.
+
+    # To make sure the the internal counter covers all the dimensions ROIs.
+    lp = len(dim) + 1
     label_template_copy = label_template.copy()
 
     print("Dim's Length is {}".format(lp))
     file_counter = 0
+    print('Total available QR codes is: ', len(onlyfiles))
 
-    for file in onlyfiles:
+    i = 0
+    while True:
+        if i == len(onlyfiles):
+            break
+        file = onlyfiles[i]
         counter += 1
         file_counter += 1
+        print('counter = ', file)
         print('counter = ', counter)
-        if counter % lp != 0:
-            qr_code = Image.open(path_QrCodes + "/" + file)
-            qr_code = qr_code.resize((dim[counter - 1], dim[counter - 1]))
-            label_template_copy.paste(qr_code, (round(roi_position[counter-1][0]), round(roi_position[counter-1][1])))
-        else:
+        if counter == lp:
             label_template_copy.save(path_final + "/" + file.split('.')[0] + "_" + str(file_counter) + ".jpg")
             label_template_copy = label_template.copy()
             counter = 0
             print('File_Counter is: ', file_counter)
+            print('latest file: ', file)
+            i -= 1
+        else:
+            qr_code = Image.open(path_QrCodes + "/" + file)
+            qr_code = qr_code.resize((dim[counter - 1], dim[counter - 1]))
+            label_template_copy.paste(qr_code,
+                                      (round(roi_position[counter - 1][0]), round(roi_position[counter - 1][1])))
 
-    label_template_copy.save(path_final + "/" + file.split('.')[0] + ".jpg") # To save the lastest qrcodes that are not saved yet.
+        i += 1
+
+    label_template_copy.save(
+        path_final + "/" + file.split('.')[0] + ".jpg")  # To save the lastest qrcodes that are not saved yet.
+
 
 def produce_labels():
     if fileisloaded:
