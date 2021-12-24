@@ -13,29 +13,41 @@ import qrcode
 '''Here we chose the ROI and create a preview of the final Label'''
 def draw_roi(path):
     label_draft = cv.imread(path)
+    scale_percent = 35  # percent of original size which can get it from the GUI
+    width = int(label_draft.shape[1] * scale_percent / 100)
+    height = int(label_draft.shape[0] * scale_percent / 100)
+    dim = (width, height)
+    # resize image
+    resized = cv.resize(label_draft, dim, interpolation=cv.INTER_AREA)
+
     QRCode = qrcode.make('This is a sample QR-Code for the template')
     QRCode.save("sample.png")
-    qr_code = Image.open("sample.png")
+    qr_code_master = Image.open("sample.png")
 
-    roi_position = cv.selectROI(label_draft)
-    print("ROI Position is: {}".format(roi_position))
+    roi_position = cv.selectROIs("Select ROIs", resized)
+    cv.destroyWindow("Select ROIs")
+    dim = []
+    roi_position = roi_position * 100 / scale_percent
+    for i in range(0, len(roi_position)):
+        dim.append(round(max([roi_position[i][2], roi_position[i][3]])))
+
     label_draft = Image.open(path)
-    dim = max([roi_position[2], roi_position[3]])
-    print("before:" + str(qr_code.size))
-    qr_code = qr_code.resize((dim, dim))
-    print("after:" + str(qr_code.size))
-    label_draft.paste(qr_code, (roi_position[0], roi_position[1]))
-    label_draft.show()
-    cv.destroyWindow("ROI selector")
-    return roi_position, dim
+    for i in range(0, len(dim)):
+        qr_code = qr_code_master.resize((dim[i], dim[i]))
+        label_draft.paste(qr_code, (round(roi_position[i][0]), round(roi_position[i][1])))
 
+    label_draft.show()
+    print("ROI Position is: {}".format(roi_position))
+    print("Dim Resizes are: {}".format(dim))
+
+    return roi_position, dim
 
 def UploadAction(event=None):
     global filename, fileisloaded
     filename = filedialog.askopenfilename()
     if filename:
         print('Selected:', filename)
-        tk.messagebox.showinfo(title="Status", message="Press 'OK' and DRAP the pointer where to stick the QR-Code and press Enter")
+        tk.messagebox.showinfo(title="Status", message="Press 'OK' and DRAG the pointer where to stick the QR-Code and press Enter")
         global roi_position, dim
         roi_position = []
         dim = []
@@ -120,14 +132,27 @@ def generate_final_labels(path_QrCodes, destination_address):
     print(onlyfiles)
     label_template = Image.open(filename)
     counter = 0
+    lp = len(dim) + 1 # To make sure the the internal counter covers all the dimensions ROIs.
+    label_template_copy = label_template.copy()
+
+    print("Dim's Length is {}".format(lp))
+    file_counter = 0
+
     for file in onlyfiles:
         counter += 1
-        label_template_copy = label_template.copy()
-        qr_code = Image.open(path_QrCodes + "/" + file)
-        qr_code = qr_code.resize((dim, dim))
-        label_template_copy.paste(qr_code, (roi_position[0], roi_position[1]))
-        label_template_copy.save(path_final + "/" + file.split('.')[0] + ".jpg")
+        file_counter += 1
+        print('counter = ', counter)
+        if counter % lp != 0:
+            qr_code = Image.open(path_QrCodes + "/" + file)
+            qr_code = qr_code.resize((dim[counter - 1], dim[counter - 1]))
+            label_template_copy.paste(qr_code, (round(roi_position[counter-1][0]), round(roi_position[counter-1][1])))
+        else:
+            label_template_copy.save(path_final + "/" + file.split('.')[0] + "_" + str(file_counter) + ".jpg")
+            label_template_copy = label_template.copy()
+            counter = 0
+            print('File_Counter is: ', file_counter)
 
+    label_template_copy.save(path_final + "/" + file.split('.')[0] + ".jpg") # To save the lastest qrcodes that are not saved yet.
 
 def produce_labels():
     if fileisloaded:
@@ -152,7 +177,6 @@ def produce_labels():
         tk.messagebox.showinfo(title="Status", message="Please upload a template")
 
 
-
 ''' Generate extra 10 pcs of labels to cover damaged ones'''
 
 
@@ -160,7 +184,7 @@ def load_main_window():
     global win, brand_name, contract_number, product_type, total_packs, initial_message
 
     win = tk.Tk()
-    win.geometry("800x600")
+    win.geometry("300x200")
     win.title("The Label Generator")
 
 
