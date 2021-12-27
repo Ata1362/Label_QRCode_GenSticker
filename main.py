@@ -225,7 +225,7 @@ def load_main_window():
 
     label6 = tk.Label(win, text="Initial message")
     initial_message = tk.Entry(win)
-    initial_message.insert(0, "www.taher-co.com\checker?item=")
+    initial_message.insert(0, "www.taher-co.com/checker?item=")
 
     button = tk.Button(win, text='Open', command=UploadAction)
 
