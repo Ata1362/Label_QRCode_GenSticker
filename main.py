@@ -40,6 +40,8 @@ def draw_roi(path):
     print("ROI Position is: {}".format(roi_position))
     print("Dim Resizes are: {}".format(dim))
 
+    tk.messagebox.showinfo(title="Selected ROIs", message="Total '{}' positions are set, Click 'Generate' if it's Correct".format(len(dim)))
+
     return roi_position, dim
 
 def UploadAction(event=None):
@@ -151,7 +153,7 @@ def generate_final_labels(path_QrCodes, destination_address):
         print('counter = ', file)
         print('counter = ', counter)
         if counter == lp:
-            label_template_copy.save(path_final + "/" + file.split('.')[0] + "_" + str(file_counter) + ".jpg")
+            label_template_copy.save(path_final + "/" + file.split('.')[0] + ".jpg")
             label_template_copy = label_template.copy()
             counter = 0
             print('File_Counter is: ', file_counter)
